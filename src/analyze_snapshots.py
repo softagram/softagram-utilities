@@ -1,14 +1,26 @@
 import sys, os, re
+"""
+Background:  Assumptions
 
-# You may want to remove old projects first
-#  docker exec -ti analyzer python3 ui/cli/softagramservice.py delete_project --project-id 9354b252-8e7b-415a-92ea-ad3a367902b6
-# you may want to cleanup old outputs also..  (Warning: this removes all outputs) sudo rm -rf
-# /opt/softagram/output/projects
+You have initialized few snapshot directories for this process. E.g. this way:
+  git clone https://github.com/facebook/react.git therepo --depth 10000
+
+ Prepare one snapshot for 2016 year while in "therepo" directory.
+  git checkout `git rev-list -1 --before="Jun 1 2016" master`
+  cp -r . ../react_2016
+  git show -s --format=%cd --date=short > ../react_2016/.snapshot.date
+  rm -rf ../react_2016/.git
+  .. and similarly for 2017, 2018, ..
+
+The file .snapshot.date is not mandatory, as you may also specify date in below input_snapshots 
+list. Only one of these methods is required, and .snapshot.date is used if both defined.
+
+"""
 
 # Inputs: project name, team_id and input_snapshots..
 
 # Project name
-project_name = 'React' 
+project_name = 'ReactSnapshots'
 
 # Required only if you have multiple teams configured, otherwise leave empty.
 team_id = ''
@@ -23,11 +35,16 @@ input_snapshots = [{
 }, {
     'dir': 'react_2016',
     'date': '2016-06-01'
+}, {
+    'dir': 'react_2017',
+    'date': '2017-06-01'
+}, {
+    'dir': 'react_2018',
+    'date': '2018-06-01'
 }]
 
 # TODO: Other metadata about snapshots like versions, labels and tags might be also useful and could
 #  be then added to the final XML model using this script.
-
 
 pattern = re.compile('Project created to (.*)')
 
@@ -48,14 +65,14 @@ with os.popen('softagram createproject --project-name ' + project_name + ' ' +
         sys.stderr.write(output + '\n\n')
         raise Exception('Cannot create project, error..')
 
-
 project_output_dir = project_input_dir.replace('/input/', '/output/')
 
 
 def rename_output_dir_according_to_snapshot(snapshot, target_dir,
                                             project_output_dir):
     outputs_dir = project_output_dir + '/master'
-    recent_output = os.listdir(outputs_dir)[-1]
+    all_subdirs = [d for d in os.listdir(outputs_dir) if os.path.isdir(d)]
+    recent_output = max(all_subdirs, key=os.path.getmtime)
     snapshot_date = None
     if os.path.exists(target_dir + '/.snapshot.date'):
         # the files has like 2016-06-01
@@ -69,8 +86,11 @@ def rename_output_dir_according_to_snapshot(snapshot, target_dir,
         output_dirname = snapshot_date + '_00-00-00Z'
         new_output_dir = outputs_dir + '/' + output_dirname
         if os.path.exists(new_output_dir):
-            shutil.rmtree(new_output_dir)  # TODO Warn about overwriting previosly generated data?
-        os.system('mv ' + outputs_dir + '/' + recent_output + ' ' + new_output_dir)
+            shutil.rmtree(
+                new_output_dir
+            )  # TODO Warn about overwriting previosly generated data?
+        os.system('mv ' + outputs_dir + '/' + recent_output + ' ' +
+                  new_output_dir)
         # Output is correctly renamed, TODO Now apply other snapshot metadata.
     else:
         sys.stderr.write(
@@ -93,4 +113,3 @@ for snapshot in input_snapshots:
 
 print('Ready')
 print('Outputs are available in ' + project_output_dir)
-
