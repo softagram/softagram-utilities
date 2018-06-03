@@ -23,7 +23,7 @@ list. Only one of these methods is required, and .snapshot.date is used if both 
 project_name = 'ReactSnapshots'
 
 # Required only if you have multiple teams configured, otherwise leave empty.
-team_id = ''
+team_id = ''  # id like adaf8a9a-fbf9-4aa4-935c-20d9c5e3771f
 
 # Please define the directory paths, dir and date.
 input_snapshots = [{
@@ -71,7 +71,12 @@ project_output_dir = project_input_dir.replace('/input/', '/output/')
 def rename_output_dir_according_to_snapshot(snapshot, target_dir,
                                             project_output_dir):
     outputs_dir = project_output_dir + '/master'
-    all_subdirs = [d for d in os.listdir(outputs_dir) if os.path.isdir(d)]
+    all_subdirs = [
+        outputs_dir + '/' + d for d in os.listdir(outputs_dir)
+        if os.path.isdir(outputs_dir + '/' + d)
+    ]
+    if len(all_subdirs) == 0:
+        raise Exception('Analysis failure, no outputs created..')
     recent_output = max(all_subdirs, key=os.path.getmtime)
     snapshot_date = None
     if os.path.exists(target_dir + '/.snapshot.date'):
@@ -89,8 +94,7 @@ def rename_output_dir_according_to_snapshot(snapshot, target_dir,
             shutil.rmtree(
                 new_output_dir
             )  # TODO Warn about overwriting previosly generated data?
-        os.system('mv ' + outputs_dir + '/' + recent_output + ' ' +
-                  new_output_dir)
+        os.system('mv ' + recent_output + ' ' + new_output_dir)
         # Output is correctly renamed, TODO Now apply other snapshot metadata.
     else:
         sys.stderr.write(
