@@ -115,5 +115,9 @@ for snapshot in input_snapshots:
                                             project_output_dir)
     os.system('rm -rf ' + target_dir)
 
-print('Ready')
+print('Ready\n')
+print('Updating models index..')
+os.system('docker exec -ti analyzer python3 analysis/delivery/model_index_generator.py '
+          '/softagram/output /tmp')
+print('Index updated.')
 print('Outputs are available in ' + project_output_dir)
