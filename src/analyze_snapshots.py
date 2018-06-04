@@ -22,8 +22,8 @@ list. Only one of these methods is required, and .snapshot.date is used if both 
 # Project name
 project_name = 'ReactSnapshots'
 
-# Required only if you have multiple teams configured, otherwise leave empty.
-team_id = ''  # id like adaf8a9a-fbf9-4aa4-935c-20d9c5e3771f
+# Required only if you have multiple teams configured, otherwise leave None
+team_id = None  # None or an id like adaf8a9a-fbf9-4aa4-935c-20d9c5e3771f
 
 # Please define the directory paths, dir and date.
 input_snapshots = [{
